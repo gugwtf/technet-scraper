@@ -1,14 +1,13 @@
-import requests, sys, urllib.request, os
+import requests, sys, urllib.request, os, time
 from bs4 import BeautifulSoup
 
 path = os.getcwd()
 
+# Check if directory exist, if not try to create it
 def directory_check(folder):
-    print(f"folder: {folder}")
     full_path = path + "/" + folder
-    print(f"FULL_PATH: {full_path}")
     try:
-      os.makedirs(full_path)
+      if os.path.isdir(full_path) is False: os.makedirs(full_path)
     except OSError:
       print(f"[FAIL] Couldn't create folder \"{folder}\" (it might already exist)")
     else:
@@ -16,15 +15,19 @@ def directory_check(folder):
 
 def main():
   url='https://gallery.technet.microsoft.com'
+  authorized_extensions=['ps1','psm1','psm','zip']
 
   for p in range(1, 1736):
+
     page_url= url + "/site/search?pageIndex=" + str(p)
+
+    print("*********************")
     print(f"PAGE URL: {page_url}")
+    print("*********************")
 
     page = requests.get(page_url)
     soup = BeautifulSoup(page.text, 'html.parser')
     articles = soup.find_all(class_='itemTitle')
-
    
     for article in articles:
       article_link = str(url) + str(article.find('a').get('href'))
@@ -35,18 +38,22 @@ def main():
         script_full_link = url + script_file
         script_category = (soup_article.find(id='sectionLeft').findAll(class_="itemBar"))[3].find('a').contents[0].lower().replace(" ","_")
         script_sub_category = (soup_article.find(id='sectionLeft').findAll(class_="itemBarLong"))[0].find('a').contents[0].lower().replace(" ","_")
-        script_file = script_full_link.rsplit('/', 1)[1]
+        script_file_name = script_full_link.rsplit('/', 1)[1].lower().replace(" ","_").replace("%20","_")
+        script_file_extension = script_file_name.rsplit('.',1)[1]
         script_directory = script_category + "/" + script_sub_category
-        script_file_directory = script_category + "/" + script_sub_category + "/" + script_file
-        print(f"ARTICLE LINK: {article_link}")
-        print(f"FILENAME: {script_file}")
-        print(f"CATEGORY: {script_category}")
-        print(f"SUB_CATEGORY: {script_sub_category}")
-        print(f"FULL LINK: {script_full_link}")
+        script_file_directory = script_category + "/" + script_sub_category + "/" + script_file_name
+
+        print(f"----------------------------")
+        print(f"Article Link: {article_link}")
+        print(f"Filename: {script_file_name}")
+        print(f"Directory: {script_category}/{script_sub_category}")
+
         directory_check(script_directory)
-        urllib.request.urlretrieve(script_full_link,script_file_directory)
+
+        if script_file_extension in authorized_extensions: urllib.request.urlretrieve(script_full_link,script_file_directory)
+        print(f"[OK] {script_file_name} downloaded!")
       except:
-        print("No downloadable file")
+        print("[FAIL] The file {script_file_name} could not be downloaded")
 
 if __name__ == '__main__':
     main()
