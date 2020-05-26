@@ -17,7 +17,7 @@ def main():
   url='https://gallery.technet.microsoft.com'
   authorized_extensions=['ps1','psm1','psm','zip']
 
-  for p in range(1, 1736):
+  for p in range(1, 1748):
 
     page_url= url + "/site/search?pageIndex=" + str(p)
 
